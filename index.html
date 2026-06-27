@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClinAether Discovery & Trial Explorer</title>
+  <!-- Google Fonts: Outfit for body/headings, Space Grotesk for sci-fi accents -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.379.0/dist/umd/lucide.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Fullscreen Particle Network Canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- App Shell -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation (Agilie Inspired Style) -->
+    <aside class="app-sidebar">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <i data-lucide="dna" class="brand-svg"></i>
+        </div>
+        <span class="brand-name">CLINAETHER</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" title="Dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" title="Clinical Trials">
+          <i data-lucide="microscope"></i>
+          <span>Trials</span>
+        </a>
+        <a href="#" class="nav-item" title="Molecular Profiles">
+          <i data-lucide="atom"></i>
+          <span>Molecules</span>
+        </a>
+        <a href="#" class="nav-item" title="Registries">
+          <i data-lucide="database"></i>
+          <span>Registries</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="api-status">
+          <span class="status-dot online"></span>
+          <span>APIs Connected</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Search & Stats Bar -->
+      <header class="search-header">
+        <div class="search-container-wrapper">
+          <div class="search-bar">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="global-search" placeholder="Search disease (e.g. Diabetes), drug (e.g. Metformin) or molecule..." autocomplete="off">
+            <div id="search-spinner" class="spinner hidden"></div>
+            <button id="search-btn" class="search-btn">
+              <span>Analyze</span>
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+          <!-- Autocomplete Dropdown -->
+          <div id="search-autocomplete" class="autocomplete-dropdown hidden"></div>
+        </div>
+
+        <div class="quick-tags">
+          <span class="tag-label">Try:</span>
+          <button class="quick-tag">Metformin</button>
+          <button class="quick-tag">Diabetes</button>
+          <button class="quick-tag">Aspirin</button>
+          <button class="quick-tag">Ibuprofen</button>
+          <button class="quick-tag">Alzheimer</button>
+          <button class="quick-tag">Penicillin</button>
+        </div>
+      </header>
+
+      <!-- Welcome Overlay / Default state -->
+      <section id="welcome-view" class="welcome-section">
+        <div class="welcome-card glass-panel">
+          <div class="welcome-icon">
+            <i data-lucide="activity" class="pulse-icon"></i>
+          </div>
+          <h2>ClinAether Explorer Dashboard</h2>
+          <p>Instantly retrieve chemical structures, molecular properties, and matching global clinical trial pipelines. Enter a molecule, drug substance, or medical condition in the search bar above to begin.</p>
+          <div class="welcome-features">
+            <div class="feat-item">
+              <i data-lucide="atom"></i>
+              <h4>PubChem Integration</h4>
+              <p>Fetches molecular formula, weight, 2D structure, SMILES, and descriptions.</p>
+            </div>
+            <div class="feat-item">
+              <i data-lucide="clipboard-list"></i>
+              <h4>ClinicalTrials.gov v2</h4>
+              <p>Searches and filters active studies by phase, recruitment status, and country.</p>
+            </div>
+            <div class="feat-item">
+              <i data-lucide="trending-up"></i>
+              <h4>Visual Timeline & Stats</h4>
+              <p>Generates active phase statistics, timeline progress, and curved gradient charts.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard Layout (Hidden by default, displayed on search) -->
+      <div id="dashboard-view" class="dashboard-grid hidden">
+        
+        <!-- Left Column: Molecular profile & statistics -->
+        <div class="dashboard-col left-col">
+          
+          <!-- Molecular Profile Card -->
+          <section class="glass-panel card-panel molecular-card" id="molecular-profile-panel">
+            <div class="panel-header">
+              <div class="title-with-icon">
+                <i data-lucide="atom" class="accent-teal"></i>
+                <h3>Molecular Profile</h3>
+              </div>
+              <span class="badge badge-purple" id="molecule-cid">CID --</span>
+            </div>
+            
+            <div class="molecular-body">
+              <div class="molecule-structure-container">
+                <div id="molecule-image-wrapper">
+                  <img id="molecule-img" src="" alt="Molecular structure representation" class="hidden">
+                  <div class="placeholder-structure" id="structure-placeholder">
+                    <i data-lucide="binary" class="icon-placeholder"></i>
+                    <span>Searching Compound ID...</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="molecule-info-grid">
+                <div class="info-row">
+                  <span class="info-label">Formula</span>
+                  <span class="info-val" id="mol-formula">--</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Mass</span>
+                  <span class="info-val" id="mol-weight">--</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">TPSA</span>
+                  <span class="info-val" id="mol-tpsa">--</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">XLogP</span>
+                  <span class="info-val" id="mol-xlogp">--</span>
+                </div>
+              </div>
+
+              <div class="molecule-text-details">
+                <div class="description-section">
+                  <h4>Pharmacological Description</h4>
+                  <p id="mol-description" class="scrollable-text">No compound description loaded.</p>
+                </div>
+                <div class="synonyms-section">
+                  <h4>Synonyms</h4>
+                  <div id="mol-synonyms" class="tags-container">
+                    <span class="tag-synonym">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Trial Statistics / Distribution -->
+          <section class="glass-panel card-panel chart-panel">
+            <div class="panel-header">
+              <div class="title-with-icon">
+                <i data-lucide="pie-chart" class="accent-cyan"></i>
+                <h3>Trial Phase Share</h3>
+              </div>
+            </div>
+            <div class="chart-body">
+              <div class="canvas-chart-container">
+                <canvas id="phase-chart"></canvas>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Right Column: Timeline & Clinical Trial grid -->
+        <div class="dashboard-col right-col">
+          
+          <!-- Visual Trial Timeline -->
+          <section class="glass-panel card-panel timeline-panel">
+            <div class="panel-header">
+              <div class="title-with-icon">
+                <i data-lucide="git-commit" class="accent-teal"></i>
+                <h3>Therapeutic Development Phase Timeline</h3>
+              </div>
+              <div id="timeline-summary" class="timeline-summary-text">No active trials recorded</div>
+            </div>
+            
+            <div class="timeline-body">
+              <div class="custom-timeline">
+                <div class="timeline-track"></div>
+                <div class="timeline-steps">
+                  <div class="timeline-step" data-phase="early-phase1">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                      <span class="step-title">Phase 0</span>
+                      <span class="step-desc">Early Phase 1</span>
+                      <span class="step-count badge" id="count-early-phase1">0</span>
+                    </div>
+                  </div>
+                  <div class="timeline-step" data-phase="phase1">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                      <span class="step-title">Phase I</span>
+                      <span class="step-desc">Safety & Dosage</span>
+                      <span class="step-count badge" id="count-phase1">0</span>
+                    </div>
+                  </div>
+                  <div class="timeline-step" data-phase="phase2">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                      <span class="step-title">Phase II</span>
+                      <span class="step-desc">Efficacy & Safety</span>
+                      <span class="step-count badge" id="count-phase2">0</span>
+                    </div>
+                  </div>
+                  <div class="timeline-step" data-phase="phase3">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                      <span class="step-title">Phase III</span>
+                      <span class="step-desc">Scale & Compare</span>
+                      <span class="step-count badge" id="count-phase3">0</span>
+                    </div>
+                  </div>
+                  <div class="timeline-step" data-phase="phase4">
+                    <div class="step-dot"></div>
+                    <div class="step-content">
+                      <span class="step-title">Phase IV</span>
+                      <span class="step-desc">Post-Marketing</span>
+                      <span class="step-count badge" id="count-phase4">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Clinical Trial List with Filters -->
+          <section class="glass-panel card-panel trials-list-panel">
+            <div class="panel-header filter-header">
+              <div class="title-with-icon">
+                <i data-lucide="microscope" class="accent-coral"></i>
+                <h3>Matching Clinical Studies</h3>
+                <span class="total-count-badge badge badge-teal" id="total-trials-count">0 Trials found</span>
+              </div>
+              
+              <!-- Inline Filter Pills -->
+              <div class="filters-row">
+                <div class="filter-group">
+                  <label>Status</label>
+                  <select id="filter-status" class="custom-select">
+                    <option value="">All Statuses</option>
+                    <option value="RECRUITING">Recruiting</option>
+                    <option value="NOT_YET_RECRUITING">Not Yet Recruiting</option>
+                    <option value="ACTIVE_NOT_RECRUITING">Active (Not Recruiting)</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="SUSPENDED">Suspended</option>
+                    <option value="TERMINATED">Terminated</option>
+                  </select>
+                </div>
+                
+                <div class="filter-group">
+                  <label>Phase</label>
+                  <select id="filter-phase" class="custom-select">
+                    <option value="">All Phases</option>
+                    <option value="EARLY_PHASE1">Phase 0</option>
+                    <option value="PHASE1">Phase 1</option>
+                    <option value="PHASE2">Phase 2</option>
+                    <option value="PHASE3">Phase 3</option>
+                    <option value="PHASE4">Phase 4</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <label>Country</label>
+                  <input type="text" id="filter-country" placeholder="e.g. United States" class="custom-input-filter">
+                </div>
+              </div>
+            </div>
+
+            <!-- Trials Card Container -->
+            <div class="trials-body-container">
+              <div id="trials-grid" class="trials-grid-layout">
+                <!-- Trial Cards injected by JS -->
+              </div>
+              
+              <!-- Loader for trials grid -->
+              <div id="trials-loader" class="trials-loader hidden">
+                <div class="double-bounce"></div>
+                <span>Fetching studies from ClinicalTrials.gov...</span>
+              </div>
+              
+              <!-- Empty State inside trials container -->
+              <div id="trials-empty" class="trials-empty-state hidden">
+                <i data-lucide="folder-open"></i>
+                <h4>No clinical studies matched your active filters.</h4>
+                <p>Try modifying your location or filtering parameters.</p>
+              </div>
+
+              <!-- Pagination Footer -->
+              <div class="trials-pagination-footer" id="trials-pagination">
+                <button id="prev-page-btn" class="btn btn-secondary" disabled>
+                  <i data-lucide="chevron-left"></i>
+                  <span>Previous</span>
+                </button>
+                <span class="pagination-indicator" id="page-indicator">Page 1</span>
+                <button id="next-page-btn" class="btn btn-secondary" disabled>
+                  <span>Next</span>
+                  <i data-lucide="chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+      
+      <!-- Registries View (Hidden by default) -->
+      <section id="registries-view" class="registries-section hidden">
+        <div class="glass-panel card-panel registries-card">
+          <div class="panel-header">
+            <div class="title-with-icon">
+              <i data-lucide="database" class="accent-teal"></i>
+              <h3>Medical Data Sources Registry</h3>
+            </div>
+            <span class="badge badge-green">100% Legally Open & Free</span>
+          </div>
+          
+          <div class="registries-body">
+            <p class="registries-intro">
+              The ClinAether Explorer queries official public database registries in real-time. This client-side architecture guarantees 100% legal compliance and free access, utilizing no proprietary commercial licenses or subscription keys.
+            </p>
+            
+            <div class="registries-table-container">
+              <table class="registries-table">
+                <thead>
+                  <tr>
+                    <th>Data Category</th>
+                    <th>Official Registry Source</th>
+                    <th>Approximate Sourced Size</th>
+                    <th>Legal Sourcing Profile</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Diseases & Conditions</strong></td>
+                    <td>ClinicalTrials.gov + NLM Medical Subject Headings (MeSH)</td>
+                    <td>10,000+ Categorized Headings</td>
+                    <td>Public Domain Records (US NLM)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Drugs & Molecules</strong></td>
+                    <td>NIH PubChem Chemical Profile Database</td>
+                    <td>110M+ Compounds & Structural Formulas</td>
+                    <td>Publicly Sourced API (NCBI PUG-REST)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Approved Medications</strong></td>
+                    <td>U.S. FDA Drug Listing NDC (openFDA) + RxNorm Vocabularies</td>
+                    <td>20,000+ Registered generic/brand listings</td>
+                    <td>Public Records (U.S. DHHS)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Clinical Trials</strong></td>
+                    <td>U.S. NIH ClinicalTrials.gov API v2 Database</td>
+                    <td>500,000+ Global Study Records</td>
+                    <td>Public Domain Database (US NIH)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="registries-footer-note">
+              <div class="alert-box-compliance">
+                <i data-lucide="shield-check" class="accent-teal"></i>
+                <span><strong>Compliance Standard:</strong> Commercial datasets such as DrugBank are intentionally bypassed in favor of open FDA and RxNorm feeds, keeping the application 100% free and open-source under public records statutes.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+
+  <!-- Study Detail Modal (Glassmorphic) -->
+  <div id="study-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel animated-scale">
+      <div class="modal-header">
+        <div class="nct-badge badge" id="modal-nct-id">NCT00000000</div>
+        <button class="close-modal-btn" id="close-modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h3 id="modal-title">Study Title</h3>
+        
+        <div class="modal-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Recruitment Status</span>
+            <span class="meta-val badge" id="modal-status">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Study Phase</span>
+            <span class="meta-val badge" id="modal-phase">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Sponsor</span>
+            <span class="meta-val" id="modal-sponsor">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Start Date</span>
+            <span class="meta-val" id="modal-start-date">--</span>
+          </div>
+        </div>
+
+        <hr class="modal-divider">
+
+        <div class="modal-details-section">
+          <h4>Brief Summary</h4>
+          <p id="modal-summary">Study summary content...</p>
+        </div>
+
+        <div class="modal-details-section">
+          <h4>Eligibility & Inclusion Criteria</h4>
+          <pre id="modal-eligibility" class="criteria-text">Eligibility rules...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript File -->
+  <script src="main.js" type="module"></script>
+  <script>
+    // Initialize Lucide Icons on body
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
