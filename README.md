@@ -37,16 +37,16 @@ To keep the application free and open-source without requiring commercial databa
 
 ---
 
-## Running Locally
+## Development Setup
 
-You do not need to install Node.js or run any build commands. The app is a static SPA.
+To run and test the application locally without build tools:
 
-1. Clone this repository:
+1. Clone the repository:
    ```bash
    git clone https://github.com/devshukla430/ClinAether.git
    ```
-2. Open the directory and start a local python server:
+2. Start a local HTTP server in the root directory:
    ```bash
    python -m http.server 3000
    ```
-3. Open your browser and go to http://localhost:3000
+3. Open `http://localhost:3000` in your web browser.
